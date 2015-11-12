@@ -41,7 +41,7 @@ new bool:started;
 
 public Plugin:myinfo =
 {
-	name = "Dice SM",
+	name = "SM Dice",
 	author = "Popoklopsi, Editted by SwegBuster",
 	version = "1.0.1",
 	description = "Roll the Dice by SwegBuster",
@@ -63,7 +63,7 @@ public OnPluginStart()
 	started = false;
 
 	AutoExecConfig_SetFile("dice_config", "dice");
-	AutoExecConfig_CreateConVar("dice_sm", "1.01", "Dice for Souremod by Popoklopsi, Editted by SwegBuster", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	AutoExecConfig_CreateConVar("dice_sm", "1.01", "Dice for Sourcemod by Popoklopsi, Editted by SwegBuster", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	
 	c_DiceText = AutoExecConfig_CreateConVar("dice_text", "dice", "Command to dice (without exclamation mark), convert to UTF-8 without BOM for special characters");
 	c_ShowNumber = AutoExecConfig_CreateConVar("dice_show", "2", "Players, which see the result: 1 = Everybody, 2 = just T's, 3 = just CT's, 4 = Only you");
