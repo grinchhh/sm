@@ -163,10 +163,19 @@ public LoadEnables()
 
 public Action:TypedText(client, args)
 {
-	if (client > 0 && client <= MaxClients && IsClientInGame(client))
-		PrepareDice(client);
-	
-	return Plugin_Handled;
+    if (client > 0 && client <= MaxClients && IsClientInGame(client))
+    {
+        if(CheckCommandAccess(client,"diceroll",ADMFLAG_CUSTOM6))
+        {
+            PrepareDice(client);
+        }
+        else
+        {
+           CPrintToChat(client,"{darkred}This a member only command! Please Apply @ GFLClan.com!");
+        }
+    }
+    
+    return Plugin_Handled;
 }
 
 public OnConVarChanged(Handle:hCvar, const String:oldValue[], const String:newValue[])
