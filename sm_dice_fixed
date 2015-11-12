@@ -453,7 +453,7 @@ DiceNow(client)
 			new Handle:cvar = FindConVar("sv_accelerate");
 
 			if (cvar != INVALID_HANDLE)
-				SetConVarInt(cvar, 5, true, false);
+				SetConVarInt(cvar, -1, true, false);
 		}
 		case 33:
 		{
