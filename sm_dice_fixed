@@ -334,7 +334,7 @@ DiceNow(client)
 		}
 		case 2:
 		{
-			drug(client);
+			blind(client, 145);
 		}
 		case 3:
 		{
