@@ -68,7 +68,7 @@ public OnPluginStart()
 	c_DiceText = AutoExecConfig_CreateConVar("dice_text", "dice", "Command to dice (without exclamation mark), convert to UTF-8 without BOM for special characters");
 	c_ShowNumber = AutoExecConfig_CreateConVar("dice_show", "2", "Players, which see the result: 1 = Everybody, 2 = just T's, 3 = just CT's, 4 = Only you");
 	c_RandNumber = AutoExecConfig_CreateConVar("dice_rand", "1", "1 = Random text when result is a weapon, 0 = Off");
-	c_DiceTeam = AutoExecConfig_CreateConVar("dice_team", "2", "2 = Only T's can dice, 3 = Only CT's can dice, 0 = Everybody can dice");
+	c_DiceTeam = AutoExecConfig_CreateConVar("dice_team", "0", "2 = Only T's can dice, 3 = Only CT's can dice, 0 = Everybody can dice");
 	c_DiceCount = AutoExecConfig_CreateConVar("dice_count", "1", "How often a player can dice per round");
 	c_DiceMoney = AutoExecConfig_CreateConVar("dice_money", "0", "x = Money one dice costs, 0 = Off");
 
@@ -171,7 +171,7 @@ public Action:TypedText(client, args)
         }
         else
         {
-           CPrintToChat(client,"{darkred}This a member only command! Please Apply @ GFLClan.com!");
+           CPrintToChat(client,"{darkred}This a Member+ only command! Please Apply @ GFLClan.com!");
         }
     }
     
@@ -334,7 +334,7 @@ DiceNow(client)
 		}
 		case 2:
 		{
-			blind(client, 145);
+			drunk(client);
 		}
 		case 3:
 		{
@@ -462,7 +462,7 @@ DiceNow(client)
 			new Handle:cvar = FindConVar("sv_accelerate");
 
 			if (cvar != INVALID_HANDLE)
-				SetConVarInt(cvar, -1, true, false);
+				SetConVarInt(cvar, 10, true, false);
 		}
 		case 33:
 		{
@@ -880,11 +880,6 @@ public drunk(client)
 	ClientCommand(client, "r_screenoverlay Effects/tp_eyefx/tp_eyefx.vmt");
 }
 
-public drug(client)
-{
-	CreateTimer(1.0, drug_loop, client, TIMER_REPEAT);	
-}
-
 public burn(client, health)
 {
 	new Float:time = float(health) / 5.0;
@@ -1003,91 +998,6 @@ public Action:EndRocket(Handle:timer, any:client)
 	
 	godmode(client, false);
 
-	return Plugin_Handled;
-}
-
-public Action:drug_loop(Handle:timer, any:client)
-{
-	if (!IsClientInGame(client)) 
-		return Plugin_Stop;
-	
-	new Float:DrugAngles[20] = {0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 20.0, 15.0, 10.0, 5.0, 0.0, -5.0, -10.0, -15.0, -20.0, -25.0, -20.0, -15.0, -10.0, -5.0};
-
-	if (!IsPlayerAlive(client))
-	{
-		new Float:pos[3];
-		new Float:angs[3];
-		
-		GetClientAbsOrigin(client, pos);
-		GetClientEyeAngles(client, angs);
-		
-		angs[2] = 0.0;
-		
-		TeleportEntity(client, pos, angs, NULL_VECTOR);	
-		
-		new Handle:message = StartMessageOne("Fade", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS);
-		
-		if(GetFeatureStatus(FeatureType_Native, "GetUserMessageType") == FeatureStatus_Available && GetUserMessageType() == UM_Protobuf) 
-		{
-			PbSetInt(message, "duration", 1536);
-			PbSetInt(message, "hold_time", 1536);
-			PbSetInt(message, "flags", (0x0001 | 0x0010));
-			PbSetColor(message, "clr", {0, 0, 0, 0});
-		}
-		else
-		{
-			BfWriteShort(message, 1536);
-			BfWriteShort(message, 1536);
-			BfWriteShort(message, (0x0001 | 0x0010));
-			BfWriteByte(message, 0);
-			BfWriteByte(message, 0);
-			BfWriteByte(message, 0);
-			BfWriteByte(message, 0);
-		}
-		
-		EndMessage();	
-		
-		return Plugin_Stop;
-	}
-	
-	new Float:pos[3];
-	new Float:angs[3];
-	new coloring[4];
-
-	coloring[0] = GetRandomInt(0,255);
-	coloring[1] = GetRandomInt(0,255);
-	coloring[2] = GetRandomInt(0,255);
-	coloring[3] = 128;
-	
-	GetClientAbsOrigin(client, pos);
-	GetClientEyeAngles(client, angs);
-	
-	angs[2] = DrugAngles[GetRandomInt(0,100) % 20];
-	
-	TeleportEntity(client, pos, angs, NULL_VECTOR);
-
-	new Handle:message = StartMessageOne("Fade", client);
-
-	if(GetFeatureStatus(FeatureType_Native, "GetUserMessageType") == FeatureStatus_Available && GetUserMessageType() == UM_Protobuf) 
-	{
-		PbSetInt(message, "duration", 255);
-		PbSetInt(message, "hold_time", 255);
-		PbSetInt(message, "flags", (0x0002));
-		PbSetColor(message, "clr", coloring);
-	}
-	else
-	{
-		BfWriteShort(message, 255);
-		BfWriteShort(message, 255);
-		BfWriteShort(message, (0x0002));
-		BfWriteByte(message, GetRandomInt(0,255));
-		BfWriteByte(message, GetRandomInt(0,255));
-		BfWriteByte(message, GetRandomInt(0,255));
-		BfWriteByte(message, 128);
-	}
-	
-	EndMessage();	
-		
 	return Plugin_Handled;
 }
 
