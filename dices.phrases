@@ -49,7 +49,7 @@
 	"dice2"
 	{
 		"#format"   "{1:N},{2:i}"
-		"en"		"{1} rolled {lightgreen}a {2}: {default}He gets drugs!"
+		"en"		"{1} rolled {lightgreen}a {2}: {default}He gets blind!"
 	}
 	"dice3"
 	{
