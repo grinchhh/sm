@@ -4,7 +4,6 @@
 #include <autoexecconfig>
 
 #undef REQUIRE_PLUGIN
-#include <updater>
 
 #pragma semicolon 1
 
@@ -43,9 +42,9 @@ public Plugin:myinfo =
 {
 	name = "SM Dice",
 	author = "Popoklopsi, Editted by SwegBuster",
-	version = "1.0.1",
+	version = "1.0.",
 	description = "Roll the Dice by SwegBuster",
-	url = "https://forums.alliedmods.net/showthread.php?t=152035"
+	url = ""
 };
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
@@ -113,18 +112,6 @@ public OnConfigsExecuted()
 	}
 }
 
-public OnAllPluginsLoaded()
-{
-	if (LibraryExists("updater"))
-		Updater_AddPlugin("http://popoklopsi.de/dice/update.txt");
-}
-
-public OnLibraryAdded(const String:name[])
-{
-	if (StrEqual(name, "updater"))
-		Updater_AddPlugin("http://popoklopsi.de/dice/update.txt");
-}
-
 public OnMapStart()
 {
 	PrecacheSound("weapons/rpg/rocketfire1.wav");
@@ -139,7 +126,7 @@ public LoadEnables()
 	
 	new Handle:keycvar = CreateKeyValues("DiceEnables");
 	
-	if (FileExists("cfg/dice/dice_enables.txt") && FileToKeyValues(keycvar, "cfg/dice/dice_enables.txt"))
+	if (FileExists("cfg/betterdice/dice_enables.txt") && FileToKeyValues(keycvar, "cfg/betterdice/dice_enables.txt"))
 	{
 		for (new x = 1; x <= DICES; x++)
 		{
@@ -466,10 +453,10 @@ DiceNow(client)
 		}
 		case 33:
 		{
-			new Handle:cvar = FindConVar("sv_friction");
+			new Handle:cvar = FindConVar("sv_accelerate");
 
 			if (cvar != INVALID_HANDLE)
-				SetConVarInt(cvar, 1, true, false);
+				SetConVarInt(cvar, 10, false, false);
 		}
 	}
 	
