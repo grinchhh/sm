@@ -1,13 +1,14 @@
 #include <sourcemod>
 #include <sdktools>
-#include <colors>
+#include <multicolors>
 #include <autoexecconfig>
 
 #undef REQUIRE_PLUGIN
+#include <updater>
 
 #pragma semicolon 1
 
-#define DICES 33
+#define DICES 30
 
 new Handle:c_DiceText;
 new Handle:c_ShowNumber;
@@ -40,11 +41,11 @@ new bool:started;
 
 public Plugin:myinfo =
 {
-	name = "SM Dice",
-	author = "Popoklopsi, Editted by SwegBuster",
-	version = "1.0.",
-	description = "Roll the Dice by SwegBuster",
-	url = ""
+	name = "Dice SM",
+	author = "Popoklopsi",
+	version = "1.6.2",
+	description = "Roll the Dice by Popoklopsi, Editted by SwegBuster",
+	url = "https://forums.alliedmods.net/showthread.php?t=152035"
 };
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
@@ -62,12 +63,12 @@ public OnPluginStart()
 	started = false;
 
 	AutoExecConfig_SetFile("dice_config", "dice");
-	AutoExecConfig_CreateConVar("dice_sm", "1.01", "Dice for Sourcemod by Popoklopsi, Editted by SwegBuster", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	AutoExecConfig_CreateConVar("dice_sm", "1.6.2", "Dice for Souremod by Popoklopsi", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	
 	c_DiceText = AutoExecConfig_CreateConVar("dice_text", "dice", "Command to dice (without exclamation mark), convert to UTF-8 without BOM for special characters");
 	c_ShowNumber = AutoExecConfig_CreateConVar("dice_show", "2", "Players, which see the result: 1 = Everybody, 2 = just T's, 3 = just CT's, 4 = Only you");
 	c_RandNumber = AutoExecConfig_CreateConVar("dice_rand", "1", "1 = Random text when result is a weapon, 0 = Off");
-	c_DiceTeam = AutoExecConfig_CreateConVar("dice_team", "0", "2 = Only T's can dice, 3 = Only CT's can dice, 0 = Everybody can dice");
+	c_DiceTeam = AutoExecConfig_CreateConVar("dice_team", "2", "2 = Only T's can dice, 3 = Only CT's can dice, 0 = Everybody can dice");
 	c_DiceCount = AutoExecConfig_CreateConVar("dice_count", "1", "How often a player can dice per round");
 	c_DiceMoney = AutoExecConfig_CreateConVar("dice_money", "0", "x = Money one dice costs, 0 = Off");
 
@@ -100,8 +101,6 @@ public OnConfigsExecuted()
 	DiceTeam = GetConVarInt(c_DiceTeam);
 	DiceCount = GetConVarInt(c_DiceCount);
 	DiceMoney = GetConVarInt(c_DiceMoney);
-	accelerate_default = GetConVarInt(FindConVar("sv_accelerate"));
-	friction_default = GetConVarInt(FindConVar("sv_friction"));
 	
 	if (!started)
 	{
@@ -110,6 +109,18 @@ public OnConfigsExecuted()
 		
 		started = true;
 	}
+}
+
+public OnAllPluginsLoaded()
+{
+	if (LibraryExists("updater"))
+		Updater_AddPlugin("http://popoklopsi.de/dice/update.txt");
+}
+
+public OnLibraryAdded(const String:name[])
+{
+	if (StrEqual(name, "updater"))
+		Updater_AddPlugin("http://popoklopsi.de/dice/update.txt");
 }
 
 public OnMapStart()
@@ -126,7 +137,7 @@ public LoadEnables()
 	
 	new Handle:keycvar = CreateKeyValues("DiceEnables");
 	
-	if (FileExists("cfg/betterdice/dice_enables.txt") && FileToKeyValues(keycvar, "cfg/betterdice/dice_enables.txt"))
+	if (FileExists("cfg/dice/dice_enables.txt") && FileToKeyValues(keycvar, "cfg/dice/dice_enables.txt"))
 	{
 		for (new x = 1; x <= DICES; x++)
 		{
@@ -150,19 +161,10 @@ public LoadEnables()
 
 public Action:TypedText(client, args)
 {
-    if (client > 0 && client <= MaxClients && IsClientInGame(client))
-    {
-        if(CheckCommandAccess(client,"diceroll",ADMFLAG_CUSTOM6))
-        {
-            PrepareDice(client);
-        }
-        else
-        {
-           CPrintToChat(client,"{darkred}This a Member+ only command! Please Apply @ GFLClan.com!");
-        }
-    }
-    
-    return Plugin_Handled;
+	if (client > 0 && client <= MaxClients && IsClientInGame(client))
+		PrepareDice(client);
+	
+	return Plugin_Handled;
 }
 
 public OnConVarChanged(Handle:hCvar, const String:oldValue[], const String:newValue[])
@@ -177,18 +179,6 @@ public OnConVarChanged(Handle:hCvar, const String:oldValue[], const String:newVa
 		DiceTeam = StringToInt(newValue);
 }
 
-public RoundStart(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	new Handle:fr = FindConVar("sv_friction");
-	new Handle:ac = FindConVar("sv_accelerate");
-
-	if (GetConVarInt(fr) != friction_default && friction_default != -1)
-		SetConVarInt(fr, friction_default, true, false);
-
-	if (GetConVarInt(ac) != accelerate_default && accelerate_default != -1)
-		SetConVarInt(ac, accelerate_default, true, false);
-}
-
 public PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -197,7 +187,6 @@ public PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 	{
 		CPrintToChat(client, "{lightgreen}[{green}%t{lightgreen}]{green} %t", "dice", "start", DiceText);
 		
-		NoclipCounter[client] = 0;
 		ClientDiced[client] = 0;
 		FroggyJumped[client] = 0;
 		Nightvision[client] = false;
@@ -321,7 +310,7 @@ DiceNow(client)
 		}
 		case 2:
 		{
-			drunk(client);
+			drug(client);
 		}
 		case 3:
 		{
@@ -390,93 +379,55 @@ DiceNow(client)
 		}
 		case 20:
 		{
-			noclip(client, false, 5.0);
-			
-			CPrintToChat(client, "{lightgreen}[{green}%t{lightgreen}]{green} %t", "dice", "noclip", NoclipCounter[client]);
-			
-			CreateTimer(1.0, NclipTimer, client, TIMER_REPEAT);
+			freeze(client, true, 30.0);
 		}
 		case 21:
 		{
-			freeze(client, true, 30.0);
+			shake(client, 100, 60, 140);
 		}
 		case 22:
 		{
-			shake(client, 100, 60, 140);
+			item(client, 4);
 		}
 		case 23:
 		{
-			item(client, 4);
+			health(client, 1, 1);
 		}
 		case 24:
 		{
-			health(client, 1, 1);
+			item(client, 5);
 		}
 		case 25:
 		{
-			item(client, 5);
+			FroggyJump[client] = true;
 		}
 		case 26:
 		{
-			FroggyJump[client] = true;
+			Nightvision[client] = true;
 		}
 		case 27:
 		{
-			Nightvision[client] = true;
+			SetEntProp(client, Prop_Send, "m_iDefaultFOV", 35);
+			SetEntProp(client, Prop_Send, "m_iFOV", 35);
 		}
 		case 28:
-		{
-			SetEntProp(client, Prop_Send, "m_iDefaultFOV", 90);
-			SetEntProp(client, Prop_Send, "m_iFOV", 90);
-		}
-		case 29:
 		{
 			SetEntProp(client, Prop_Send, "m_iDefaultFOV", 200);
 			SetEntProp(client, Prop_Send, "m_iFOV", 200);
 		}
-		case 30:
+		case 29:
 		{
 			SetInvisible(client, false);
 		}
-		case 31:
+		case 30:
 		{
 			SetOnFire(client, false);
 			speed(client, 1.65);
 			health(client, 100, 2);
 		}
-		case 32:
-		{
-			new Handle:cvar = FindConVar("sv_accelerate");
-
-			if (cvar != INVALID_HANDLE)
-				SetConVarInt(cvar, 10, true, false);
-		}
-		case 33:
-		{
-			new Handle:cvar = FindConVar("sv_accelerate");
-
-			if (cvar != INVALID_HANDLE)
-				SetConVarInt(cvar, 10, false, false);
-		}
 	}
 	
 	ShowText(client, number);
-}
-
-public Action:NclipTimer(Handle:timer, any:client)
-{
-	if (NoclipCounter[client] > 0 && IsPlayerAlive(client) && IsClientInGame(client))
-	{
-		CPrintToChat(client, "{lightgreen}[{green}%t{lightgreen}]{green} %t", "dice", "noclip", NoclipCounter[client]);
-
-		NoclipCounter[client]--;
-		
-		return Plugin_Continue;
-	}
-	
-	noclip(client, false, 0.0);
-	
-	return Plugin_Stop;
 }
 
 ShowText(client, DiceNumber)
@@ -517,8 +468,8 @@ ShowText(client, DiceNumber)
 			
 		Format(trans, sizeof(trans), "dice%i", DiceNumber);
 		
-		CPrintToChat(client, "%s%t", Prefix, "taser");
-		CPrintToChat(client, "%s%t", Prefix, "taser");
+		CPrintToChat(client, "%s%t", Prefix, "deagle");
+		CPrintToChat(client, "%s%t", Prefix, "deagle");
 	}
 
 	if ((DiceNumber == 32 || DiceNumber == 33) && ShowNumber != 1)
@@ -539,7 +490,6 @@ public reset(client)
 	new Float:angs[3];
 	
 	gravity(client, 1.0);
-	noclip(client, false, 0.0);
 	freeze(client, false, 0.0);
 	speed(client, 1.0);
 	godmode(client, false);
@@ -775,7 +725,7 @@ public item(client, type)
 	{
 		case 1:
 		{
-			GivePlayerItem(client, "weapon_taser");
+			GivePlayerItem(client, "weapon_deagle");
 		}
 		case 2:
 		{
@@ -788,14 +738,14 @@ public item(client, type)
 		}
 		case 4:
 		{
-			GivePlayerItem(client, "weapon_decoy");
+			GivePlayerItem(client, "weapon_glock");
 		}
 		case 5:
 		{
 			if (getGame())
-				GivePlayerItem(client, "weapon_knife");
+				GivePlayerItem(client, "weapon_m3");
 			else
-				GivePlayerItem(client, "weapon_knife");
+				GivePlayerItem(client, "weapon_sawedoff");
 		}
 	}
 }
@@ -807,19 +757,6 @@ public bool:getGame()
 	GetGameFolderName(game, sizeof(game));
 
 	return (StrEqual(game, "cstrike", false));
-}
-
-public noclip(client, bool:turnOn, Float:time)
-{
-	if (IsClientInGame(client))
-	{
-		if (turnOn)
-		{
-			SetEntityMoveType(client, MOVETYPE_NOCLIP);
-		}
-		else
-			SetEntityMoveType(client, MOVETYPE_WALK);
-	}
 }
 
 public freeze(client, bool:turnOn, Float:time)
@@ -865,6 +802,11 @@ public health(client, amount, type)
 public drunk(client)
 {
 	ClientCommand(client, "r_screenoverlay Effects/tp_eyefx/tp_eyefx.vmt");
+}
+
+public drug(client)
+{
+	CreateTimer(1.0, drug_loop, client, TIMER_REPEAT);	
 }
 
 public burn(client, health)
@@ -984,7 +926,93 @@ public Action:EndRocket(Handle:timer, any:client)
 	AcceptEntityInput(expl, "Kill");
 	
 	godmode(client, false);
+	ForcePlayerSuicide(client);
 
+	return Plugin_Handled;
+}
+
+public Action:drug_loop(Handle:timer, any:client)
+{
+	if (!IsClientInGame(client)) 
+		return Plugin_Stop;
+	
+	new Float:DrugAngles[20] = {0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 20.0, 15.0, 10.0, 5.0, 0.0, -5.0, -10.0, -15.0, -20.0, -25.0, -20.0, -15.0, -10.0, -5.0};
+
+	if (!IsPlayerAlive(client))
+	{
+		new Float:pos[3];
+		new Float:angs[3];
+		
+		GetClientAbsOrigin(client, pos);
+		GetClientEyeAngles(client, angs);
+		
+		angs[2] = 0.0;
+		
+		TeleportEntity(client, pos, angs, NULL_VECTOR);	
+		
+		new Handle:message = StartMessageOne("Fade", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS);
+		
+		if(GetFeatureStatus(FeatureType_Native, "GetUserMessageType") == FeatureStatus_Available && GetUserMessageType() == UM_Protobuf) 
+		{
+			PbSetInt(message, "duration", 1536);
+			PbSetInt(message, "hold_time", 1536);
+			PbSetInt(message, "flags", (0x0001 | 0x0010));
+			PbSetColor(message, "clr", {0, 0, 0, 0});
+		}
+		else
+		{
+			BfWriteShort(message, 1536);
+			BfWriteShort(message, 1536);
+			BfWriteShort(message, (0x0001 | 0x0010));
+			BfWriteByte(message, 0);
+			BfWriteByte(message, 0);
+			BfWriteByte(message, 0);
+			BfWriteByte(message, 0);
+		}
+		
+		EndMessage();	
+		
+		return Plugin_Stop;
+	}
+	
+	new Float:pos[3];
+	new Float:angs[3];
+	new coloring[4];
+
+	coloring[0] = GetRandomInt(0,255);
+	coloring[1] = GetRandomInt(0,255);
+	coloring[2] = GetRandomInt(0,255);
+	coloring[3] = 128;
+	
+	GetClientAbsOrigin(client, pos);
+	GetClientEyeAngles(client, angs);
+	
+	angs[2] = DrugAngles[GetRandomInt(0,100) % 20];
+	
+	TeleportEntity(client, pos, angs, NULL_VECTOR);
+
+	new Handle:message = StartMessageOne("Fade", client);
+
+	if(GetFeatureStatus(FeatureType_Native, "GetUserMessageType") == FeatureStatus_Available && GetUserMessageType() == UM_Protobuf) 
+	{
+		PbSetInt(message, "duration", 255);
+		PbSetInt(message, "hold_time", 255);
+		PbSetInt(message, "flags", (0x0002));
+		PbSetColor(message, "clr", coloring);
+	}
+	else
+	{
+		BfWriteShort(message, 255);
+		BfWriteShort(message, 255);
+		BfWriteShort(message, (0x0002));
+		BfWriteByte(message, GetRandomInt(0,255));
+		BfWriteByte(message, GetRandomInt(0,255));
+		BfWriteByte(message, GetRandomInt(0,255));
+		BfWriteByte(message, 128);
+	}
+	
+	EndMessage();	
+		
 	return Plugin_Handled;
 }
 
