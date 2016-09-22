@@ -1,10 +1,8 @@
 #include <sourcemod>
 #include <sdktools>
-#include <multicolors>
+#include <colors>
 #include <autoexecconfig>
 
-#undef REQUIRE_PLUGIN
-#include <updater>
 
 #pragma semicolon 1
 
@@ -25,10 +23,6 @@ new DiceTeam;
 new DiceMoney;
 new DiceCount;
 
-new friction_default = -1;
-new accelerate_default = -1;
-
-new NoclipCounter[MAXPLAYERS + 1];
 new ClientDiced[MAXPLAYERS + 1];
 new FroggyJumped[MAXPLAYERS + 1];
 new fire[MAXPLAYERS + 1];
@@ -63,7 +57,7 @@ public OnPluginStart()
 	started = false;
 
 	AutoExecConfig_SetFile("dice_config", "dice");
-	AutoExecConfig_CreateConVar("dice_sm", "1.6.2", "Dice for Souremod by Popoklopsi", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	AutoExecConfig_CreateConVar("sm_dice", "1.6.2", "Dice for Souremod by Popoklopsi, Editted by SwegBuster", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	
 	c_DiceText = AutoExecConfig_CreateConVar("dice_text", "dice", "Command to dice (without exclamation mark), convert to UTF-8 without BOM for special characters");
 	c_ShowNumber = AutoExecConfig_CreateConVar("dice_show", "2", "Players, which see the result: 1 = Everybody, 2 = just T's, 3 = just CT's, 4 = Only you");
@@ -85,7 +79,6 @@ public OnPluginStart()
 	HookEvent("player_spawn", PlayerSpawn);
 	HookEvent("player_death", PlayerDeath);
 	HookEvent("player_jump", PlayerJump);
-	HookEvent("round_start", RoundStart);
 	
 	LoadTranslations("dice.phrases");
 }
@@ -111,18 +104,6 @@ public OnConfigsExecuted()
 	}
 }
 
-public OnAllPluginsLoaded()
-{
-	if (LibraryExists("updater"))
-		Updater_AddPlugin("http://popoklopsi.de/dice/update.txt");
-}
-
-public OnLibraryAdded(const String:name[])
-{
-	if (StrEqual(name, "updater"))
-		Updater_AddPlugin("http://popoklopsi.de/dice/update.txt");
-}
-
 public OnMapStart()
 {
 	PrecacheSound("weapons/rpg/rocketfire1.wav");
@@ -137,7 +118,7 @@ public LoadEnables()
 	
 	new Handle:keycvar = CreateKeyValues("DiceEnables");
 	
-	if (FileExists("cfg/dice/dice_enables.txt") && FileToKeyValues(keycvar, "cfg/dice/dice_enables.txt"))
+	if (FileExists("cfg/betterdice/dice_enables.txt") && FileToKeyValues(keycvar, "cfg/betterdice/dice_enables.txt"))
 	{
 		for (new x = 1; x <= DICES; x++)
 		{
@@ -159,13 +140,22 @@ public LoadEnables()
 		EnabledNumbers[1] = false;
 }
 
-public Action:TypedText(client, args)
-{
-	if (client > 0 && client <= MaxClients && IsClientInGame(client))
-		PrepareDice(client);
-	
-	return Plugin_Handled;
-}
+ public Action:TypedText(client, args)
+ {
+     if (client > 0 && client <= MaxClients && IsClientInGame(client))
+     {
+         if(CheckCommandAccess(client,"diceroll",ADMFLAG_CUSTOM6))
+         {
+             PrepareDice(client);
+         }
+         else
+         {
+            CPrintToChat(client,"{darkred}This a Member+ only command! Please Apply @ GFLClan.com!");
+         }
+     }
+     
+     return Plugin_Handled;
+ }
 
 public OnConVarChanged(Handle:hCvar, const String:oldValue[], const String:newValue[])
 {
